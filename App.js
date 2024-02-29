@@ -3,50 +3,12 @@ import { Button, Text, TextInput, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-const AuthContext = React.createContext();
+// screens
+import { SignInScreen } from "./screens/SignInScreen";
+import { HomeScreen } from "./screens/HomeScreen";
+import { SplashScreen } from "./screens/SplashScreen";
 
-function SplashScreen() {
-  return (
-    <View>
-      <Text>Loading...</Text>
-    </View>
-  );
-}
-
-function HomeScreen() {
-  const { signOut } = React.useContext(AuthContext);
-
-  return (
-    <View>
-      <Text>Signed in!</Text>
-      <Button title="Sign out" onPress={signOut} />
-    </View>
-  );
-}
-
-function SignInScreen() {
-  const [username, setUsername] = React.useState("");
-  const [password, setPassword] = React.useState("");
-
-  const { signIn } = React.useContext(AuthContext);
-
-  return (
-    <View>
-      <TextInput
-        placeholder="Username"
-        value={username}
-        onChangeText={setUsername}
-      />
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Button title="Sign in" onPress={() => signIn({ username, password })} />
-    </View>
-  );
-}
+export const AuthContext = React.createContext();
 
 const Stack = createNativeStackNavigator();
 
@@ -134,19 +96,28 @@ export default function App({ navigation }) {
             // We haven't finished checking for the token yet
             <Stack.Screen name="Splash" component={SplashScreen} />
           ) : state.userToken == null ? (
-            // No token found, user isn't signed in
             <Stack.Screen
               name="SignIn"
               component={SignInScreen}
-              options={{
+              initialParams={{ signIn: authContext.signIn }} // Pass signIn function as initialParams
+              options={({ navigation }) => ({
                 title: "Sign in",
-                // When logging out, a pop animation feels intuitive
-                animationTypeForReplace: state.isSignout ? "pop" : "push",
-              }}
+                animationTypeForReplace: navigation.isFocused()
+                  ? "pop"
+                  : "push",
+              })}
             />
           ) : (
             // User is signed in
-            <Stack.Screen name="Home" component={HomeScreen} />
+
+            <Stack.Screen
+              name="Home"
+              component={HomeScreen}
+              initialParams={{
+                signIn: authContext.signIn,
+                signOut: authContext.signOut,
+              }}
+            />
           )}
         </Stack.Navigator>
       </NavigationContainer>
